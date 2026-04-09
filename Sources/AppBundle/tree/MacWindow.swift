@@ -223,6 +223,9 @@ private func unbindAndGetBindingDataForNewWindow(_ windowId: UInt32, _ macApp: M
 @MainActor
 private func unbindAndGetBindingDataForNewTilingWindow(_ workspace: Workspace, window: Window?) -> BindingData {
     window?.unbindFromParent() // It's important to unbind to get correct data from below
+    if let bindingData = getBindingDataForOverflowTilingWindow(workspace) {
+        return bindingData
+    }
     let mruWindow = workspace.mostRecentWindowRecursive
     if let mruWindow, let tilingParent = mruWindow.parent as? TilingContainer {
         return BindingData(
@@ -237,6 +240,127 @@ private func unbindAndGetBindingDataForNewTilingWindow(_ workspace: Workspace, w
             index: INDEX_BIND_LAST,
         )
     }
+}
+
+@MainActor
+private func getBindingDataForOverflowTilingWindow(_ workspace: Workspace) -> BindingData? {
+    if let hTilesBinding = getBindingDataForHTilesOverflow(workspace) {
+        return hTilesBinding
+    }
+    return getBindingDataForVTilesOverflow(workspace)
+}
+
+@MainActor
+private func getBindingDataForVTilesOverflow(_ workspace: Workspace) -> BindingData? {
+    guard let limit = config.workspaceToVTilesLimit[workspace.name] else { return nil }
+    let root = workspace.rootTilingContainer
+    guard root.layout == .tiles, root.orientation == .h else { return nil }
+
+    let mruWindow = workspace.mostRecentWindowRecursive
+    let defaultInsertionParent = (mruWindow?.parent as? TilingContainer) ?? root
+    guard defaultInsertionParent === root else { return nil }
+
+    let topLevelVTiles = root.children.compactMap(asTopLevelVTiles)
+    guard topLevelVTiles.count >= limit else { return nil }
+
+    guard let activeRootChild = mruWindow ?? root.mostRecentChild,
+          let activeIndex = activeRootChild.ownIndex
+    else {
+        return nil
+    }
+
+    let targetVTiles = root.children.dropFirst(activeIndex + 1).compactMap(asTopLevelVTiles).first
+        ?? root.children.prefix(activeIndex).reversed().compactMap(asTopLevelVTiles).first
+    guard let targetVTiles else { return nil }
+
+    let targetAccordion = targetVTiles.mostRecentChild(where: isTopLevelHAccordion)
+        .flatMap { $0 as? TilingContainer }
+        ?? createTopLevelHAccordion(in: targetVTiles)
+
+    return BindingData(
+        parent: targetAccordion,
+        adaptiveWeight: WEIGHT_AUTO,
+        index: INDEX_BIND_LAST,
+    )
+}
+
+@MainActor
+private func getBindingDataForHTilesOverflow(_ workspace: Workspace) -> BindingData? {
+    guard let limit = config.workspaceToHTilesLimit[workspace.name] else { return nil }
+    let root = workspace.rootTilingContainer
+    guard root.layout == .tiles, root.orientation == .h else { return nil }
+
+    let mruWindow = workspace.mostRecentWindowRecursive
+    let defaultInsertionParent = (mruWindow?.parent as? TilingContainer) ?? root
+    guard defaultInsertionParent === root else { return nil }
+    guard root.children.count >= limit else { return nil }
+
+    guard let activeRootChild = mruWindow ?? root.mostRecentChild,
+          let activeIndex = activeRootChild.ownIndex
+    else {
+        return nil
+    }
+
+    let targetChild = root.children.getOrNil(atIndex: activeIndex + 1)
+        ?? root.children.getOrNil(atIndex: activeIndex - 1)
+    guard let targetChild else { return nil }
+
+    let targetVAccordion = (targetChild as? TilingContainer)?
+        .takeIf { $0.layout == .accordion && $0.orientation == .v }
+        ?? createTopLevelVAccordion(around: targetChild)
+
+    return BindingData(
+        parent: targetVAccordion,
+        adaptiveWeight: WEIGHT_AUTO,
+        index: INDEX_BIND_LAST,
+    )
+}
+
+private func asTopLevelVTiles(_ node: TreeNode) -> TilingContainer? {
+    guard let container = node as? TilingContainer,
+          container.layout == .tiles,
+          container.orientation == .v
+    else {
+        return nil
+    }
+    return container
+}
+
+private func isTopLevelHAccordion(_ node: TreeNode) -> Bool {
+    guard let container = node as? TilingContainer else { return false }
+    return container.layout == .accordion && container.orientation == .h
+}
+
+@MainActor
+private func createTopLevelVAccordion(around node: TreeNode) -> TilingContainer {
+    let previousBinding = node.unbindFromParent()
+    let vAccordion = TilingContainer(
+        parent: previousBinding.parent,
+        adaptiveWeight: previousBinding.adaptiveWeight,
+        .v,
+        .accordion,
+        index: previousBinding.index,
+    )
+    node.bind(to: vAccordion, adaptiveWeight: WEIGHT_AUTO, index: 0)
+    return vAccordion
+}
+
+@MainActor
+private func createTopLevelHAccordion(in vTiles: TilingContainer) -> TilingContainer {
+    guard let mruChild = vTiles.mostRecentChild ?? vTiles.children.last else {
+        return TilingContainer(parent: vTiles, adaptiveWeight: WEIGHT_AUTO, .h, .accordion, index: INDEX_BIND_LAST)
+    }
+
+    let previousBinding = mruChild.unbindFromParent()
+    let accordion = TilingContainer(
+        parent: vTiles,
+        adaptiveWeight: previousBinding.adaptiveWeight,
+        .h,
+        .accordion,
+        index: previousBinding.index,
+    )
+    mruChild.bind(to: accordion, adaptiveWeight: WEIGHT_AUTO, index: 0)
+    return accordion
 }
 
 @MainActor

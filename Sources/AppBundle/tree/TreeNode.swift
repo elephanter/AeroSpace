@@ -113,6 +113,12 @@ open class TreeNode: Equatable, AeroAny {
     }
 
     var mostRecentChild: TreeNode? { _mruChildren.mostRecent ?? children.last }
+    func mostRecentChild(where predicate: (TreeNode) -> Bool) -> TreeNode? {
+        for child in _mruChildren where predicate(child) {
+            return child
+        }
+        return children.reversed().first(where: predicate)
+    }
 
     @discardableResult
     func unbindFromParent() -> BindingData {

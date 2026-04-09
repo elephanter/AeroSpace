@@ -21,6 +21,8 @@ Move the focused window in the given direction. See the "Examples" section for m
 
 Deprecated name: `move-through`
 
+Use `move left` and `move right` to move a window between neighboring `v_tiles`.
+
 // =========================================================== Options
 include::./util/conditional-options-header.adoc[]
 

@@ -9,7 +9,11 @@ extension Workspace {
 
 extension TilingContainer {
     @MainActor fileprivate func unbindEmptyAndAutoFlatten() {
-        if let child = children.singleOrNil(), config.enableNormalizationFlattenContainers && (child is TilingContainer || !isRootContainer) {
+        if let child = children.singleOrNil(),
+           config.enableNormalizationFlattenContainers &&
+           (child is TilingContainer || !isRootContainer) &&
+           !shouldPreserveForWorkspaceVTilesLimit(singleChild: child)
+        {
             child.unbindFromParent()
             let mru = parent?.mostRecentChild
             let previousBinding = unbindFromParent()
@@ -28,5 +32,19 @@ extension TilingContainer {
                 unbindFromParent()
             }
         }
+    }
+
+    @MainActor private func shouldPreserveForWorkspaceVTilesLimit(singleChild: TreeNode) -> Bool {
+        guard let workspace = nodeWorkspace, config.workspaceToVTilesLimit[workspace.name] != nil else { return false }
+        guard layout == .tiles, orientation == .v else { return false }
+        guard let parent = parent as? TilingContainer,
+              parent.isRootContainer,
+              parent.layout == .tiles,
+              parent.orientation == .h
+        else {
+            return false
+        }
+        guard let childContainer = singleChild as? TilingContainer else { return false }
+        return childContainer.layout == .accordion && childContainer.orientation == .h
     }
 }

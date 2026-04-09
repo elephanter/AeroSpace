@@ -123,6 +123,8 @@ private let configParser: [String: any ParserProtocol<Config>] = [
 
     "gaps": Parser(\.gaps, parseGaps),
     "workspace-to-monitor-force-assignment": Parser(\.workspaceToMonitorForceAssignment, parseWorkspaceToMonitorAssignment),
+    "workspace-to-v-tiles-limit": Parser(\.workspaceToVTilesLimit, parseWorkspaceToVTilesLimit),
+    "workspace-to-h-tiles-limit": Parser(\.workspaceToHTilesLimit, parseWorkspaceToVTilesLimit),
     "on-window-detected": Parser(\.onWindowDetected, parseOnWindowDetectedArray),
 
     // Deprecated

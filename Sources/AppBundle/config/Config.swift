@@ -57,6 +57,8 @@ struct Config: ConvenienceCopyable {
 
     var gaps: Gaps = .zero
     var workspaceToMonitorForceAssignment: [String: [MonitorDescription]] = [:]
+    var workspaceToVTilesLimit: [String: Int] = [:]
+    var workspaceToHTilesLimit: [String: Int] = [:]
     var modes: [String: Mode] = [:]
     var onWindowDetected: [WindowDetectedCallback] = []
     var onModeChanged: [any Command] = []

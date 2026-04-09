@@ -33,6 +33,21 @@ default-root-container-layout = 'tiles'
 #               tall monitor (anything higher than wide) gets vertical orientation
 default-root-container-orientation = 'auto'
 
+# Optional per-workspace limit for top-level `v_tiles` in a root `h_tiles` layout.
+# When the limit is reached and a new tiling window would otherwise create a new top-level child,
+# AeroSpace inserts it into a top-level `h_accordion` inside the nearest `v_tiles` to the right
+# of the active root child (or to the left if there is none on the right).
+# Example:
+# workspace-to-v-tiles-limit = { "1" = 3, web = 2 }
+
+# Optional per-workspace limit for top-level columns in a root `h_tiles` layout.
+# This limit counts all direct children of the root `h_tiles`, not only literal `h_tiles` nodes.
+# When the limit is reached and a new tiling window would otherwise create a new top-level child,
+# AeroSpace inserts it into the nearest root child to the right via a top-level `v_accordion`
+# (or to the left if there is none on the right).
+# Example:
+# workspace-to-h-tiles-limit = { "A" = 3, "O" = 3 }
+
 # Mouse follows focus when focused monitor changes
 # Drop it from your config, if you don't like this behavior
 # See https://nikitabobko.github.io/AeroSpace/guide#on-focus-changed-callbacks

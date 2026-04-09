@@ -286,6 +286,74 @@ final class ConfigTest: XCTestCase {
         assertEquals([:], defaultConfig.workspaceToMonitorForceAssignment)
     }
 
+    func testParseWorkspaceToVTilesLimit() {
+        let (parsed, errors) = parseConfig(
+            """
+            workspace-to-v-tiles-limit = { "1" = 3, web = 2 }
+            """,
+        )
+        assertEquals(errors, [])
+        assertEquals(parsed.workspaceToVTilesLimit, ["1": 3, "web": 2])
+        assertEquals(defaultConfig.workspaceToVTilesLimit, [:])
+    }
+
+    func testParseWorkspaceToHTilesLimit() {
+        let (parsed, errors) = parseConfig(
+            """
+            workspace-to-h-tiles-limit = { "1" = 3, web = 2 }
+            """,
+        )
+        assertEquals(errors, [])
+        assertEquals(parsed.workspaceToHTilesLimit, ["1": 3, "web": 2])
+        assertEquals(defaultConfig.workspaceToHTilesLimit, [:])
+    }
+
+    func testWorkspaceToVTilesLimitRequiresTable() {
+        let (_, errors) = parseConfig(
+            """
+            workspace-to-v-tiles-limit = 1
+            """,
+        )
+        assertEquals(errors, [
+            "workspace-to-v-tiles-limit: Expected type is 'table'. But actual type is 'int'",
+        ])
+    }
+
+    func testWorkspaceToHTilesLimitRequiresTable() {
+        let (_, errors) = parseConfig(
+            """
+            workspace-to-h-tiles-limit = 1
+            """,
+        )
+        assertEquals(errors, [
+            "workspace-to-h-tiles-limit: Expected type is 'table'. But actual type is 'int'",
+        ])
+    }
+
+    func testWorkspaceToVTilesLimitRequiresPositiveIntegers() {
+        let (_, errors) = parseConfig(
+            """
+            workspace-to-v-tiles-limit = { "1" = "3", web = 0 }
+            """,
+        )
+        assertEquals(errors, [
+            "workspace-to-v-tiles-limit.1: Expected type is 'int'. But actual type is 'string'",
+            "workspace-to-v-tiles-limit.web: Must be greater than 0",
+        ])
+    }
+
+    func testWorkspaceToHTilesLimitRequiresPositiveIntegers() {
+        let (_, errors) = parseConfig(
+            """
+            workspace-to-h-tiles-limit = { "1" = "3", web = 0 }
+            """,
+        )
+        assertEquals(errors, [
+            "workspace-to-h-tiles-limit.1: Expected type is 'int'. But actual type is 'string'",
+            "workspace-to-h-tiles-limit.web: Must be greater than 0",
+        ])
+    }
+
     func testParseOnWindowDetected() {
         let (parsed, errors) = parseConfig(
             """

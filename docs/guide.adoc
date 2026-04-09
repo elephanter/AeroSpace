@@ -283,6 +283,35 @@ While in a `v_accordion`, you can navigate the windows using the `focus (up|down
 
 Accordion padding is configurable via `accordion-padding` option.
 
+You can also limit the amount of top-level `v_tiles` per workspace:
+
+[source,toml]
+----
+workspace-to-v-tiles-limit = { "1" = 3, web = 2 }
+----
+
+The limit only applies to direct `v_tiles` children of a root `h_tiles`.
+When the limit is reached and a new tiling window would otherwise create a new top-level child,
+AeroSpace inserts it into a top-level `h_accordion` inside the nearest `v_tiles` to the right
+of the active root child, or to the left if there is no matching `v_tiles` on the right.
+
+You can also limit the amount of top-level columns in a root `h_tiles` layout:
+
+[source,toml]
+----
+workspace-to-h-tiles-limit = { "A" = 3, "O" = 3 }
+----
+
+This limit counts all direct children of the root `h_tiles`, not only literal `h_tiles` nodes.
+This distinction matters because, with normalizations enabled, nested `h_tiles` under `h_tiles`
+aren't a stable shape.
+
+When the limit is reached and a new tiling window would otherwise create a new top-level child,
+AeroSpace inserts it into the nearest root child to the right via a top-level `v_accordion`,
+or to the left if there is no root child on the right.
+
+To move a window between neighboring `v_tiles`, use `move left` and `move right`.
+
 [#normalization]
 === Normalization
 
