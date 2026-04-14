@@ -4,6 +4,7 @@ extension Workspace {
         if config.enableNormalizationOppositeOrientationForNestedContainers {
             rootTilingContainer.normalizeOppositeOrientationForNestedContainers()
         }
+        enforceWorkspaceRootLimits(self)
     }
 }
 
